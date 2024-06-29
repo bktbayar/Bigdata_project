@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import requests
 import numpy as np
 import pydeck as pdk
+from matplotlib.colors import LinearSegmentedColormap
 
 # Set page configuration at the top
 st.set_page_config(layout="wide")
@@ -25,6 +26,31 @@ def load_data():
 
 # Load the data
 df = load_data()
+
+# Example descriptions for crime types (you can replace these with actual descriptions)
+crime_descriptions = {
+    "THEFT": "Taking property without permission.",
+    "BATTERY": "Physical attack or threat.",
+    "CRIMINAL DAMAGE": "Damaging property intentionally.",
+    "ASSAULT": "Threatening physical harm.",
+    "OTHER OFFENSE": "Other criminal activities.",
+    "NARCOTICS": "Drug-related offenses.",
+    "BURGLARY": "Illegal entry with intent to commit a crime.",
+    "MOTOR VEHICLE THEFT": "Theft of a motor vehicle.",
+    "ROBBERY": "Taking property by force.",
+    "DECEPTIVE PRACTICE": "Fraud or deceitful actions.",
+    "CRIMINAL TRESPASS": "Entering property without permission.",
+    "WEAPONS VIOLATION": "Illegal possession or use of weapons.",
+    "PROSTITUTION": "Engaging in or promoting sexual activities for money.",
+    "SEX OFFENSE": "Sexual crimes excluding rape.",
+    "GAMBLING": "Illegal betting or gaming.",
+    "LIQUOR LAW VIOLATION": "Breaking laws related to alcohol.",
+    "ARSON": "Setting fire to property intentionally.",
+    "HOMICIDE": "Killing of one person by another.",
+    "KIDNAPPING": "Unlawful seizure and detention of a person.",
+    "INTIMIDATION": "Threatening someone to cause fear.",
+    "STALKING": "Repeated, unwanted attention and contact."
+}
 
 # Set up the Streamlit app
 st.title("Chicago Crime Data Analysis")
@@ -84,8 +110,48 @@ if section == "Crime Types Distribution":
     with st.expander("Crime Types Distribution", expanded=True):
         st.write(f"### Showing {len(filtered_data)} records")
         st.subheader("Crime Types Distribution")
+        
         crime_type_counts = filtered_data['primary_type'].value_counts()
-        st.bar_chart(crime_type_counts)
+        
+        # Calculate the percentage of each crime type
+        crime_type_percent = (crime_type_counts / crime_type_counts.sum()) * 100
+        
+        # Aggregate crime types below 4% into "Others"
+        other_crimes = crime_type_percent[crime_type_percent < 4].sum()
+        main_crimes = crime_type_percent[crime_type_percent >= 4]
+        main_crimes['Others'] = other_crimes
+        
+        # Define a color map with shades of blue
+        colors = LinearSegmentedColormap.from_list("", ["#d1e5f0", "#2166ac"])
+        
+        # Pie chart for crime type distribution
+        fig, ax = plt.subplots(figsize=(5, 5))  # Smaller figure size
+        wedges, texts, autotexts = ax.pie(main_crimes, labels=main_crimes.index, autopct='%1.1f%%', startangle=90, colors=colors(np.linspace(0, 1, len(main_crimes))), textprops={'fontsize': 8})
+        
+        # Change the color of the text
+        for text in texts:
+            text.set_color('black')
+        for autotext in autotexts:
+            autotext.set_color('white')
+        
+        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        st.pyplot(fig)
+
+        # Display the legend below the pie chart
+        st.subheader("Legend")
+        for crime_type, percentage in main_crimes.items():
+            if crime_type == 'Others':
+                continue
+            description = crime_descriptions.get(crime_type, "No description available.")
+            st.write(f"**{crime_type}**: {description} - **{percentage:.2f}%**")
+        
+        # Display the breakdown of the "Others" category
+        if 'Others' in main_crimes:
+            st.subheader("Others Category Breakdown")
+            other_types = crime_type_percent[crime_type_percent < 4]
+            for crime_type, percentage in other_types.items():
+                description = crime_descriptions.get(crime_type, "No description available.")
+                st.write(f"**{crime_type}**: {description} - **{percentage:.2f}%**")
 
 elif section == "Crime Over Time":
     with st.expander("Crime Over Time", expanded=True):
@@ -101,6 +167,9 @@ elif section == "Crime Locations":
         if not filtered_data.empty:
             filtered_data['latitude'] = filtered_data['latitude'].astype(float)
             filtered_data['longitude'] = filtered_data['longitude'].astype(float)
+            filtered_data['date_str'] = filtered_data.apply(
+                lambda row: f"{row['year']}-{row['month']:02d}-{row['day']:02d} {row['hour']:02d}:00:00", axis=1
+            )  # Correct date formatting
             view_state = pdk.ViewState(
                 latitude=filtered_data['latitude'].mean(),
                 longitude=filtered_data['longitude'].mean(),
@@ -115,7 +184,10 @@ elif section == "Crime Locations":
                 get_color=[0, 0, 0],  # Change color to black
                 pickable=True
             )
-            tool_tip = {"html": "Date: {date}<br/>Type: {primary_type}<br/>Description: {description}", "style": {"backgroundColor": "steelblue", "color": "white"}}
+            tool_tip = {
+                "html": "<b>Date:</b> {date_str}<br/><b>Type:</b> {primary_type}<br/><b>Description:</b> {description}",
+                "style": {"backgroundColor": "steelblue", "color": "white"}
+            }
             crime_map = pdk.Deck(map_style='mapbox://styles/mapbox/light-v9', initial_view_state=view_state, layers=[layer], tooltip=tool_tip)
             st.pydeck_chart(crime_map, use_container_width=True)
 
@@ -160,3 +232,6 @@ elif section == "Arrest Analysis":
         st.subheader("Arrest Analysis")
         arrest_counts = filtered_data['arrest'].value_counts()
         st.bar_chart(arrest_counts)
+
+
+
