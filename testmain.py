@@ -1,11 +1,11 @@
-# main.py
+# testmain.py
 import streamlit as st
+
+st.set_page_config(page_title="Chicago Safety Guide", page_icon="🛡️", layout="wide")
+
 from pages import data_analysis
 from pages import map
 import base64
-
-# Set the page configuration with a title and an icon
-st.set_page_config(page_title="Chicago Safety Guide", page_icon="🛡️", layout="wide")
 
 # Function to load image as base64
 def get_base64_image(image_path):
@@ -18,7 +18,7 @@ page = st.sidebar.radio("Select Page", ["Home", "Map", "Crime Data Analysis"])
 
 if page == "Home":
     # Replace with the correct path to your image
-    background_image_path = r"C:\Users\Bayar\Desktop\Bigdata_project-main\chi2.jpg"
+    background_image_path = r"/Users/kiri/Documents/HWR/master/SS/Enterprise/Bigdata_project-1/chicago-bean-photo-1.jpg.webp"
     background_image = get_base64_image(background_image_path)
 
     # Add custom CSS for styling
@@ -29,48 +29,47 @@ if page == "Home":
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow: hidden; /* Disable scrolling */
         }}
         .main {{
             background: url("data:image/jpeg;base64,{background_image}") no-repeat center center fixed;
             background-size: cover;
-            height: 100vh;
-            display: flex;
-            justify-content: flex-start; /* Align content to the top */
-            align-items: center;
-            padding: 20px;
-            text-align: center;
+            width: 100vw;
+            position: relative;
         }}
         .content-wrapper {{
+            position: absolute;
+            top: 5px;  /* Position content 5px from the top */
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
             max-width: 800px;
+            text-align: center;
         }}
         .title {{
             color: #ffffff;
             font-size: 48px;
             font-weight: bold;
             background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
+            padding: 5px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }}
         .text {{
             color: #ffffff;
             font-size: 18px;
             background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
+            padding: 5px;
             border-radius: 10px;
             margin-bottom: 10px;
-            text-align: center;
         }}
         .footer {{
             color: #ffffff;
             font-size: 18px;
             background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 5px;
             border-radius: 10px;
-            text-align: center;
-            margin-top: 20px;
+            margin-top: 5px;
         }}
         </style>
         """, unsafe_allow_html=True
@@ -86,8 +85,7 @@ if page == "Home":
             <div class="text">
             Your comprehensive resource for staying safe and informed in the Windy City. Our platform offers a range of tools, including interactive charts and dashboards, and an intuitive map to help you navigate Chicago confidently. Whether you're a resident or a visitor, our guide provides up-to-date safety information, empowering you to make well-informed decisions and explore the city with peace of mind.
             </div>
-            """, unsafe_allow_html=True
-        )
+            """, unsafe_allow_html=True)
         st.markdown('<div class="footer">Use the sidebar to navigate to different sections of the app</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)

@@ -8,9 +8,6 @@ import pydeck as pdk
 from datetime import datetime, timedelta
 from matplotlib.colors import LinearSegmentedColormap
 
-# Set page configuration at the top
-st.set_page_config(layout="wide")
-
 # Function to load data from the Chicago Data Portal
 @st.cache_data
 def load_data():
