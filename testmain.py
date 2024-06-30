@@ -50,26 +50,29 @@ if page == "Home":
             color: #ffffff;
             font-size: 48px;
             font-weight: bold;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.3);
             padding: 5px;
             border-radius: 10px;
             margin-bottom: 10px;
+            text-align: center;
         }}
         .text {{
             color: #ffffff;
             font-size: 18px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.3);
             padding: 5px;
             border-radius: 10px;
             margin-bottom: 10px;
+            text-align: center;
         }}
         .footer {{
             color: #ffffff;
             font-size: 18px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.3);
             padding: 5px;
             border-radius: 10px;
             margin-top: 5px;
+            text-align: center;
         }}
         </style>
         """, unsafe_allow_html=True
