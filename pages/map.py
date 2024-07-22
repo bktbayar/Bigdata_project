@@ -5,12 +5,13 @@ import requests
 import pydeck as pdk
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime, timedelta
 
 @st.cache_data
 def load_data():
     url = "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
     data = requests.get(url, params={"$limit": 10000}).json()  # Fetching 10,000 records
-    community_area = pd.read_csv('C:/Users/yaren/Bigdata_project/community_area.csv', sep=';')
+    community_area = pd.read_csv('community_area.csv', sep=';')
     community_area = community_area[['Number', 'Name']]
     
     df = pd.DataFrame(data)
@@ -38,19 +39,31 @@ def run():
     st.title("Chicago Crime Data Map")
     st.sidebar.header("Filters")
 
+    # Date range filter
+    min_date = datetime(2022, 1, 1)  # Set the minimum date to January 1, 2022
+    max_date = df['date'].max().to_pydatetime()  # Convert to datetime for comparison
+    current_date = datetime.now()
+    default_end_date = min(current_date, max_date)
+    start_of_week = default_end_date - timedelta(days=default_end_date.weekday())
     min_date = df['date'].min()
     max_date = df['date'].max()
-    start_date, end_date = st.sidebar.date_input('Date range', [min_date, max_date])
+    date_range = st.sidebar.date_input('Date range', [min_date, max_date])
 
-    years = df['date'].dt.year.unique()
-    selected_years = st.sidebar.multiselect("Select Year", years, default=years)
+    # Ensure date_range always has two dates
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+    else:
+        start_date = start_of_week
+        end_date = default_end_date
+
+    # years = df['date'].dt.year.unique()
+    # selected_years = st.sidebar.multiselect("Select Year", years, default=years)
 
     crime_types = df['primary_type'].unique()
     selected_crime_types = st.sidebar.multiselect("Select Crime Type", crime_types, default=crime_types)
 
     filtered_data = df[(df['date'] >= pd.to_datetime(start_date)) & 
                        (df['date'] <= pd.to_datetime(end_date)) & 
-                       (df['date'].dt.year.isin(selected_years)) &
                        (df['primary_type'].isin(selected_crime_types))]
 
     if not filtered_data.empty:
