@@ -7,16 +7,12 @@ import numpy as np
 import pydeck as pdk
 from datetime import datetime, timedelta
 from matplotlib.colors import LinearSegmentedColormap
-
+import time
 # Function to load data from the Chicago Data Portal
 @st.cache_data
 def load_data():
     url = "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
-    params = {
-        "$limit": 10000,
-        "$order": "date DESC"
-    }
-    data = requests.get(url, params=params).json()  # Fetching 10,000 most recent records
+    data = requests.get(url, params={"$limit": 10000}).json()  # Fetching 10,000 record
     df = pd.DataFrame(data)
     df['date'] = pd.to_datetime(df['date'])
     df['year'] = df['date'].dt.year
@@ -81,7 +77,6 @@ def run():
 
     # Sidebar for filters and navigation
     st.sidebar.header("Filters")
-    st.sidebar.subheader("Data Filters")
 
     # Date range filter
     min_date = datetime(2022, 1, 1)  # Set the minimum date to January 1, 2022
@@ -91,11 +86,15 @@ def run():
     current_date = datetime.now()
     default_end_date = min(current_date, max_date)
     start_of_week = default_end_date - timedelta(days=default_end_date.weekday())
-    start_date, end_date = st.sidebar.date_input('Date range', [start_of_week, default_end_date], min_value=min_date, max_value=max_date)
+    # Date input for date range
+    date_range = st.sidebar.date_input('Date range', [start_of_week, default_end_date], min_value=min_date, max_value=max_date)
 
-    # Year filter
-    years = [2022, 2023, 2024]  # Include years 2022, 2023, and 2024
-    selected_year = st.sidebar.multiselect("Select Year", years, default=[2024])
+    # Ensure date_range always has two dates
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+    else:
+        start_date = start_of_week
+        end_date = default_end_date
 
     # Crime type filter
     crime_types = df['primary_type'].unique()
@@ -109,7 +108,7 @@ def run():
     search_term = st.sidebar.text_input("Search Crime Description, Case Number, etc.")
 
     # Filter the data based on the selected options and search term
-    filtered_data = df[(df['year'].isin(selected_year)) & 
+    filtered_data = df[
                     (df['primary_type'].isin(selected_crime_types)) & 
                     (df['date'] >= np.datetime64(start_date)) & 
                     (df['date'] <= np.datetime64(end_date))]
@@ -122,13 +121,12 @@ def run():
     section = st.sidebar.radio("Go to", [
         "Crime Types Distribution", 
         "Crime Over Time", 
-        "Crime Locations", 
-        "Distribution per Community Area",
         "Crime by Day of Week",
         "Crime by Hour",
         "Crime Trends",
         "Arrest Analysis",
-        "Crime by Location Description"
+        "Crime by Location Description",
+        "Distribution per Community Area"
     ])
 
     # Expanders for each section based on navigation
@@ -187,35 +185,6 @@ def run():
             st.subheader("Crime Over Time")
             crime_over_time = filtered_data.groupby('date').size()
             st.line_chart(crime_over_time)
-
-    elif section == "Crime Locations":
-            st.subheader("Crime Locations")
-            if not filtered_data.empty:
-                filtered_data['latitude'] = filtered_data['latitude'].astype(float)
-                filtered_data['longitude'] = filtered_data['longitude'].astype(float)
-                filtered_data['date_str'] = filtered_data.apply(
-                    lambda row: f"{row['year']}-{row['month']:02d}-{row['day']:02d} {row['hour']:02d}:00:00", axis=1
-                )  # Correct date formatting
-                view_state = pdk.ViewState(
-                    latitude=filtered_data['latitude'].mean(),
-                    longitude=filtered_data['longitude'].mean(),
-                    zoom=10,
-                    pitch=0
-                )
-                layer = pdk.Layer(
-                    'ScatterplotLayer',
-                    data=filtered_data,
-                    get_position='[longitude, latitude]',
-                    get_radius=100,
-                    get_color=[0, 0, 0],  # Change color to black
-                    pickable=True
-                )
-                tool_tip = {
-                    "html": "<b>Date:</b> {date_str}<br/><b>Type:</b> {primary_type}<br/><b>Description:</b> {description}",
-                    "style": {"backgroundColor": "steelblue", "color": "white"}
-                }
-                crime_map = pdk.Deck(map_style='mapbox://styles/mapbox/light-v9', initial_view_state=view_state, layers=[layer], tooltip=tool_tip)
-                st.pydeck_chart(crime_map, use_container_width=True)
 
     elif section == "Distribution per Community Area":
             st.subheader("Amount of Crime Type per Community Area")
