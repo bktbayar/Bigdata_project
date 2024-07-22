@@ -18,7 +18,7 @@ page = st.sidebar.radio("Select Page", ["Home", "Map", "Crime Data Analysis"])
 
 if page == "Home":
     # Replace with the correct path to your image
-    background_image_path = os.path.join(os.path.dirname(__file__), "Bigdata_project", "chi2.jpg")
+    background_image_path = r"C:\Users\Bayar\Desktop\Bigdata_project\chi2.jpg"
     background_image = get_base64_image(background_image_path)
 
     # Add custom CSS for styling
